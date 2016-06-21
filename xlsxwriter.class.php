@@ -11,6 +11,12 @@ class XLSXWriter
 	//http://office.microsoft.com/en-us/excel-help/excel-specifications-and-limits-HP010073849.aspx
 	const EXCEL_2007_MAX_ROW=1048576;
 	const EXCEL_2007_MAX_COL=16384;
+
+	const ALIGNMENT_GENERAL = 'general';
+	const ALIGNMENT_LEFT = 'left';
+	const ALIGNMENT_CENTER = 'center';
+	const ALIGNMENT_RIGHT = 'right';
+
 	//------------------------------------------------------------------
 	protected $author ='Doc Author';
 	protected $sheets = array();
@@ -19,6 +25,8 @@ class XLSXWriter
 	protected $temp_files = array();
 	protected $cell_formats = array();//contains excel format like YYYY-MM-DD HH:MM:SS
 	protected $cell_types = array();//contains friendly format like datetime
+	protected $headerHorizontalAlign = self::ALIGNMENT_GENERAL;
+	protected $dataHorizontalAlign = self::ALIGNMENT_GENERAL;
 
 	protected $current_sheet = '';
 	protected $temp_dir = NULL;
@@ -31,9 +39,20 @@ class XLSXWriter
 			date_default_timezone_set('UTC');
 		}
 		$this->addCellFormat($cell_format='GENERAL');
+		$this->addCellFormat($cell_format='HEADER');
 	}
 
 	public function setAuthor($author='') { $this->author=$author; }
+
+	public function setHeaderHorizontalAlign($headerHorizontalAlign)
+	{
+		$this->headerHorizontalAlign=$headerHorizontalAlign;
+	}
+
+	public function setDataHorizontalAlign($dataHorizontalAlign)
+	{
+		$this->dataHorizontalAlign=$dataHorizontalAlign;
+	}
 
 	public function __destruct()
 	{
@@ -43,12 +62,12 @@ class XLSXWriter
 			}
 		}
 	}
-	
+
 	public function setTempDir($dir)
 	{
 		$this->temp_dir = $dir;
 	}
-	
+
 	protected function tempFilename()
 	{
 		$temp_dir = is_null($this->temp_dir) ? sys_get_temp_dir() : $this->temp_dir;
@@ -236,7 +255,7 @@ class XLSXWriter
 
 			$sheet->file_writer->write('<row collapsed="false" customFormat="false" customHeight="false" hidden="false" ht="12.1" outlineLevel="0" r="' . (1) . '">');
 			foreach ($header_row as $k => $v) {
-				$this->writeCell($sheet->file_writer, 0, $k, $v, $cell_format_index = '0');//'0'=>'string'
+				$this->writeCell($sheet->file_writer, 0, $k, $v, $cell_format_index = '1');//'1'=>'string' and custom alignment
 			}
 			$sheet->file_writer->write('</row>');
 			$sheet->row_count++;
@@ -301,7 +320,7 @@ class XLSXWriter
 		$sheet->file_writer->close();
 		$sheet->finalized=true;
 	}
-	
+
 	public function markMergedCell($sheet_name, $start_cell_row, $start_cell_column, $end_cell_row, $end_cell_column)
 	{
 		if (empty($sheet_name) || $this->sheets[$sheet_name]->finalized)
@@ -332,7 +351,11 @@ class XLSXWriter
 
 	protected function writeCell(XLSXWriter_BuffererWriter &$file, $row_number, $column_number, $value, $cell_format_index)
 	{
-		$cell_type = $this->cell_types[$cell_format_index];
+		if ($row_number === 0) {
+			$cell_type = 'string';
+		} else {
+			$cell_type = $this->cell_types[$cell_format_index];
+		}
 		$cell_name = self::xlsCell($row_number, $column_number);
 
 		if (!is_scalar($value) || $value==='') { //objects, array, empty
@@ -378,9 +401,9 @@ class XLSXWriter
 		$file->write('</fonts>');
 		$file->write('<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>');
 		$file->write('<borders count="1"><border diagonalDown="false" diagonalUp="false"><left/><right/><top/><bottom/><diagonal/></border></borders>');
-		$file->write(	'<cellStyleXfs count="20">');
+		$file->write(	'<cellStyleXfs count="21">');
 		$file->write(		'<xf applyAlignment="true" applyBorder="true" applyFont="true" applyProtection="true" borderId="0" fillId="0" fontId="0" numFmtId="164">');
-		$file->write(		'<alignment horizontal="general" indent="0" shrinkToFit="false" textRotation="0" vertical="bottom" wrapText="false"/>');
+		$file->write(		'<alignment horizontal="' . $this->dataHorizontalAlign . '" indent="0" shrinkToFit="false" textRotation="0" vertical="bottom" wrapText="false"/>');
 		$file->write(		'<protection hidden="false" locked="true"/>');
 		$file->write(		'</xf>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
@@ -397,17 +420,25 @@ class XLSXWriter
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"/>');
-		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="43"/>');
-		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="41"/>');
-		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="44"/>');
-		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="42"/>');
-		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="9"/>');
+		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="40"/>');
+		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
+		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
+		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
+		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
+		$file->write(		'<xf applyAlignment="true" applyBorder="true" applyFont="true" applyProtection="true" borderId="0" fillId="0" fontId="0" numFmtId="164">');
+		$file->write(		'<alignment horizontal="' . $this->headerHorizontalAlign . '" indent="0" shrinkToFit="false" textRotation="0" vertical="bottom" wrapText="false"/>');
+		$file->write(		'<protection hidden="false" locked="true"/>');
+		$file->write(		'</xf>');
 		$file->write(	'</cellStyleXfs>');
 
 		$file->write(	'<cellXfs count="'.count($this->cell_formats).'">');
 		foreach($this->cell_formats as $i=>$v)
 		{
-			$file->write('<xf applyAlignment="false" applyBorder="false" applyFont="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="'.(164+$i).'" xfId="0"/>');
+			if ($v === 'HEADER') {
+				$file->write('<xf applyAlignment="false" applyBorder="false" applyFont="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="164" xfId="20"/>');
+			} else {
+				$file->write('<xf applyAlignment="false" applyBorder="false" applyFont="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="'.(164+$i).'" xfId="0"/>');
+			}
 		}
 		$file->write(	'</cellXfs>');
 		//$file->write(	'<cellXfs count="4">');
