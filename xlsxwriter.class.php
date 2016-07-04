@@ -31,12 +31,12 @@ class XLSXWriter
 	protected $current_sheet = '';
 	protected $temp_dir = NULL;
 
-	public function __construct()
+	public function __construct($timeZone = 'UTC')
 	{
 		if(!ini_get('date.timezone'))
 		{
 			//using date functions can kick out warning if this isn't set
-			date_default_timezone_set('UTC');
+			date_default_timezone_set($timeZone);
 		}
 		$this->addCellFormat($cell_format='GENERAL');
 		$this->addCellFormat($cell_format='HEADER');
@@ -253,7 +253,7 @@ class XLSXWriter
         {
 			$header_row = array_keys($header_types);
 
-			$sheet->file_writer->write('<row collapsed="false" customFormat="false" customHeight="false" hidden="false" ht="12.1" outlineLevel="0" r="' . (1) . '">');
+			$sheet->file_writer->write('<row collapsed="false" customFormat="true" customHeight="false" hidden="false" ht="12.1" outlineLevel="0" r="' . (1) . '">');
 			foreach ($header_row as $k => $v) {
 				$this->writeCell($sheet->file_writer, 0, $k, $v, $cell_format_index = '1');//'1'=>'string' and custom alignment
 			}
@@ -401,11 +401,8 @@ class XLSXWriter
 		$file->write('</fonts>');
 		$file->write('<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>');
 		$file->write('<borders count="1"><border diagonalDown="false" diagonalUp="false"><left/><right/><top/><bottom/><diagonal/></border></borders>');
-		$file->write(	'<cellStyleXfs count="21">');
-		$file->write(		'<xf applyAlignment="true" applyBorder="true" applyFont="true" applyProtection="true" borderId="0" fillId="0" fontId="0" numFmtId="164">');
-		$file->write(		'<alignment horizontal="' . $this->dataHorizontalAlign . '" indent="0" shrinkToFit="false" textRotation="0" vertical="bottom" wrapText="false"/>');
-		$file->write(		'<protection hidden="false" locked="true"/>');
-		$file->write(		'</xf>');
+		$file->write(	'<cellStyleXfs count="20">');
+		$file->write(		'<xf applyAlignment="true" applyBorder="true" applyFont="true" applyProtection="true" borderId="0" fillId="0" fontId="0" numFmtId="164"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="2" numFmtId="0"/>');
@@ -420,25 +417,25 @@ class XLSXWriter
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"/>');
-		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="40"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
 		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
-		$file->write(		'<xf applyAlignment="true" applyBorder="true" applyFont="true" applyProtection="true" borderId="0" fillId="0" fontId="0" numFmtId="164">');
-		$file->write(		'<alignment horizontal="' . $this->headerHorizontalAlign . '" indent="0" shrinkToFit="false" textRotation="0" vertical="bottom" wrapText="false"/>');
-		$file->write(		'<protection hidden="false" locked="true"/>');
-		$file->write(		'</xf>');
+		$file->write(		'<xf applyAlignment="false" applyBorder="false" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="1" numFmtId="0"/>');
 		$file->write(	'</cellStyleXfs>');
 
 		$file->write(	'<cellXfs count="'.count($this->cell_formats).'">');
 		foreach($this->cell_formats as $i=>$v)
 		{
 			if ($v === 'HEADER') {
-				$file->write('<xf applyAlignment="false" applyBorder="false" applyFont="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="164" xfId="20"/>');
+				$file->write('<xf applyAlignment="true" applyBorder="true" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="164" xfId="0">');
+                $file->write('<alignment horizontal="' . $this->headerHorizontalAlign . '" vertical="center"/>');
 			} else {
-				$file->write('<xf applyAlignment="false" applyBorder="false" applyFont="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="'.(164+$i).'" xfId="0"/>');
+				$file->write('<xf applyAlignment="true" applyBorder="true" applyFont="true" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="'.(164+$i).'" xfId="0">');
+                $file->write('<alignment horizontal="' . $this->dataHorizontalAlign . '" vertical="center"/>');
 			}
+
+            $file->write('</xf>');
 		}
 		$file->write(	'</cellXfs>');
 		//$file->write(	'<cellXfs count="4">');
